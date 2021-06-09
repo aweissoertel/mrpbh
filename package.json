@@ -1,0 +1,16 @@
+{
+  "name": "discord-bot",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "simple discord bot",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "author": "squab_",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^12.5.3",
+    "node-localstorage": "^2.1.6"
+  }
+}
