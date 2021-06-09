@@ -1,5 +1,7 @@
 import Discord from 'discord.js';
 import { messageHandler } from './components/messageHandler.js';
+import dotenv from 'dotenv'
+dotenv.config();
 
 //const Discord = require('discord.js');
 const client = new Discord.Client();
