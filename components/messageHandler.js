@@ -1,7 +1,8 @@
 import { bobbyCounter, aufgeklatscht } from './counter.js';
 
 export function messageHandler(message){
-    switch (message.content.toLowerCase()) {
+    const format = message.content.toLowerCase().trim();
+    switch (format) {
         case 'bobby':
         case 'bobby kraulen':
             message.reply(bobbyCounter());

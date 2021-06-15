@@ -16,6 +16,8 @@ export function aufgeklatscht(message) {
     let counter = 0;
     if (localStorage.getItem(`aufg-${id}`)) {
         counter = localStorage.getItem(`aufg-${id}`);
+    } else {
+        console.log(`[DEBUG] aufgeklatscht: No entry found for this id: ${id}`);
     }
     localStorage.setItem(`aufg-${id}`, ++counter);
     return (
