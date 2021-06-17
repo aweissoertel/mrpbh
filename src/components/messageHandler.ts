@@ -5,10 +5,12 @@ export function messageHandler(message){
     switch (format) {
         case 'bobby':
         case 'bobby kraulen':
-            message.reply(bobbyCounter());
+            bobbyCounter()
+                .then(reply => { message.reply(reply) })
             return;
     }
     if (message.content.toLowerCase().startsWith('aufgeklatscht')) {
-        message.reply(aufgeklatscht(message));
+        aufgeklatscht(message)
+            .then(reply => { message.reply(reply) });
     }
 }

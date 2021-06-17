@@ -1,18 +1,26 @@
 {
   "name": "discord-bot",
-  "type": "module",
   "version": "1.0.0",
   "description": "simple discord bot",
-  "main": "index.js",
+  "main": "build/index.js",
   "scripts": {
-    "test": "test",
-    "start": "node ."
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rimraf ./build && tsc",
+    "start": "npm run build && node build/index.js",
+    "postinstall": "patch-package",
+    "heroku-postbuild": "patch-package"
   },
   "author": "squab_",
   "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^15.12.2",
+    "patch-package": "^6.4.7",
+    "rimraf": "^3.0.2",
+    "typescript": "^4.3.3"
+  },
   "dependencies": {
     "discord.js": "^12.5.3",
     "dotenv": "^10.0.0",
-    "node-localstorage": "^2.1.6"
+    "grud": "^1.0.11"
   }
 }
