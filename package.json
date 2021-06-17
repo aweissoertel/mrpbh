@@ -6,22 +6,22 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rimraf ./build && tsc",
-    "start": "npm run build && node ./build/index.js",
+    "start": "node ./build/index.js",
     "dev": "npm run build && node build/index.js",
     "postinstall": "patch-package",
-    "heroku-postbuild": "patch-package"
+    "heroku-postbuild": "patch-package && npm run build"
   },
   "author": "squab_",
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^15.12.2",
     "patch-package": "^6.4.7",
+    "rimraf": "^3.0.2",
     "typescript": "^4.3.3"
   },
   "dependencies": {
     "discord.js": "^12.5.3",
     "dotenv": "^10.0.0",
-    "grud": "^1.0.11",
-    "rimraf": "^3.0.2"
+    "grud": "^1.0.11"
   }
 }
