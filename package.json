@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rimraf ./build && tsc",
-    "start": "npm run build && node build/index.js",
+    "start": "node build/index.js",
+    "dev": "npm run build && node build/index.js",
     "postinstall": "patch-package",
     "heroku-postbuild": "patch-package"
   },
