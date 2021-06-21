@@ -21,16 +21,16 @@ export class Storage {
 
     async getItem(key: string): Promise<number | string> {
         const ans = await this.db.find({ "id": key });
-        return await ans?.count;
+        return ans?.count;
     }
 
     async setItem(key: string, value: number | string): Promise<number | string> {
         const data = { id: String(key), count: String(value), };
-        return await this.db.update({ id: key }, data);
+        return this.db.update({ id: key }, data);
     }
 
     async createItem(key: string, value: number | string): Promise<number | string> {
         const data = { id: key, count: String(value), };
-        return await this.db.save(data);
+        return this.db.save(data);
     }
 }

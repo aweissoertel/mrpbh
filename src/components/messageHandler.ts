@@ -1,6 +1,7 @@
+import { Message } from 'discord.js';
 import { bobbyCounter, aufgeklatscht } from './counter.js';
 
-export function messageHandler(message){
+export function messageHandler(message: Message): void {
     const format = message.content.toLowerCase().trim();
     switch (format) {
         case 'bobby':
@@ -9,7 +10,7 @@ export function messageHandler(message){
                 .then(reply => { message.reply(reply) })
             return;
     }
-    if (message.content.toLowerCase().startsWith('aufgeklatscht')) {
+    if (format.startsWith('aufgeklatscht')) {
         aufgeklatscht(message)
             .then(reply => { message.reply(reply) });
     }
