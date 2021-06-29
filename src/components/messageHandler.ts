@@ -12,6 +12,6 @@ export function messageHandler(message: Message): void {
     }
     if (format.startsWith('aufgeklatscht')) {
         aufgeklatscht(message)
-            .then(reply => { message.reply(reply) });
+            .then(reply => { message.channel.send(reply) });
     }
 }

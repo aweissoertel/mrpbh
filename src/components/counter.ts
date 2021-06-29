@@ -1,4 +1,4 @@
-import { Message } from 'discord.js';
+import { Message, MessageEmbed } from 'discord.js';
 import { Storage } from './storageHandler.js';
 
 const bStorage = new Storage('bobby');
@@ -13,7 +13,7 @@ export async function bobbyCounter(): Promise<string> {
     );
 }
 
-export async function aufgeklatscht(message: Message): Promise<string> {
+export async function aufgeklatscht(message: Message): Promise<MessageEmbed> {
     const tagged = message.mentions?.users?.first();
     const id = tagged ? tagged.id : message.author.id;
     let counter = 0;
@@ -25,7 +25,13 @@ export async function aufgeklatscht(message: Message): Promise<string> {
         console.log(`[DEBUG] aufgeklatscht: No entry found for this id: ${id}`);
         aStorage.createItem(String(id), ++counter);
     }
-    return (
-        `Opfer ${tagged ? tagged : message.author} ist aufgeklatscht. Schon ${counter} Mal aufgeklatscht.`
-    );
+
+    const fancyEmbed = new MessageEmbed()
+        .setColor('#FEE75C')
+        .setTitle('Aufgeklatscht')
+        .setDescription(`Opfer ${tagged ? tagged : message.author} ist aufgeklatscht.\nSchon ${counter} Mal aufgeklatscht.\n(${message.author})`)
+        .setTimestamp()
+        .setFooter(':)','https://cdn.discordapp.com/avatars/519217034530127903/5ba34624d113bdbf4b48dd1c3c574130.png')
+
+    return fancyEmbed;
 }
