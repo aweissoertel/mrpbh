@@ -1,6 +1,6 @@
 import { Message } from 'discord.js';
 import { bobbyCounter, aufgeklatscht } from './counter.js';
-import { test } from './voice.js';
+import { leave, pause, resume, schedulePlay } from './voice.js';
 
 export function messageHandler(message: Message): void {
     const format = message.content.toLowerCase().trim();
@@ -10,14 +10,21 @@ export function messageHandler(message: Message): void {
             bobbyCounter()
                 .then(reply => { message.reply(reply) })
             return;
+        case 'play':
+            schedulePlay(message);
+            return;
+        case 'pause':
+            pause();
+            return;
+        case 'weiter':
+            resume();
+            return;
+        case 'tschö':
+            leave();
+            return;
     }
     if (format.startsWith('aufgeklatscht')) {
         aufgeklatscht(message)
             .then(reply => { message.channel.send(reply) });
-    }
-
-    if (format === 'play') {
-        test(message)
-        .then(_ => console.log('test done'));
     }
 }
