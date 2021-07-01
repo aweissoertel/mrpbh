@@ -16,7 +16,7 @@ export function messageHandler(message: Message): void {
             .then(reply => { message.channel.send(reply) });
     }
 
-    if (format.startsWith('play')) {
+    if (format === 'play') {
         test(message)
         .then(_ => console.log('test done'));
     }

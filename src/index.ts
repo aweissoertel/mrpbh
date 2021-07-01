@@ -17,3 +17,7 @@ client.on('message', message => {
     if (message.author.bot) return;
     messageHandler(message);
 });
+
+client.on('shardError', error => {
+    console.error('A websocket connection encountered an error:', error);
+});
