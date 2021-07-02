@@ -22,8 +22,14 @@ function dispatchSetup() {
 
 export async function schedulePlay(message: Message): Promise<void> {
     if (!message.member?.voice.channel || connection) {console.log(connection); return;}
-    //TODO: get yt link
-    const ytlink = 'https://youtu.be/FC3y9llDXuM';
+    const arg = message.content.split(' ')[1];
+    let ytlink = '';
+    if (arg?.startsWith('http') || arg?.startsWith('youtu')) {
+        ytlink = arg;
+    } else {
+        //TODO: get yt link
+        ytlink = 'https://youtu.be/FC3y9llDXuM';
+    }
 
     connection = await message.member.voice.channel.join();
     play(ytlink);
@@ -39,6 +45,7 @@ export async function pause() {
 }
 
 export async function resume() {
+    console.log(dispatcher);
     dispatcher?.resume();
 }
 
