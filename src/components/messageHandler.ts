@@ -10,9 +10,6 @@ export function messageHandler(message: Message): void {
             bobbyCounter()
                 .then(reply => { message.reply(reply) })
             return;
-        case 'play':
-            schedulePlay(message);
-            return;
         case 'pause':
             pause();
             return;
@@ -26,5 +23,8 @@ export function messageHandler(message: Message): void {
     if (format.startsWith('aufgeklatscht')) {
         aufgeklatscht(message)
             .then(reply => { message.channel.send(reply) });
+    }
+    if (format.startsWith('play')) {
+        schedulePlay(message);
     }
 }
