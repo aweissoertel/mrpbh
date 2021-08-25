@@ -13,6 +13,9 @@
   },
   "author": "squab_",
   "license": "ISC",
+  "engines": {
+    "node": "16.x"
+  },
   "devDependencies": {
     "@types/node": "^15.12.2",
     "patch-package": "^6.4.7",
