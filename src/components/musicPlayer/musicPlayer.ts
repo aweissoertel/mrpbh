@@ -2,6 +2,7 @@ import { AudioPlayerStatus, AudioResource, entersState, joinVoiceChannel, VoiceC
 import { GuildMember, Message, Snowflake, User } from "discord.js";
 import { MusicSubscription } from "./subscription";
 import { Track } from "./track";
+import { commands } from "./voiceSetup";
 
 const subscriptions = new Map<Snowflake, MusicSubscription>();
 
@@ -27,19 +28,23 @@ export function playerInteractMessage(message: Message, _command: string) {
     const reply = async (content: string): Promise<void> => { await message.reply(content) };
     let command = '';
     switch(_command) {
-        case 'pause':
+        case commands.pause:
             command = 'pause';
             break;
-        case 'unpause':
+        case commands.resume:
             command = 'resume';
             break;
-        case 'weiter':
+        case commands.stop:
+            command = 'stop';
+            break;
+        case commands.skip:
+        case 'skip':
             command = 'skip';
             break;
-        case 'tschö':
+        case commands.leave:
             command = 'leave';
             break;
-        case 'warteschlange':
+        case commands.queue:
         case 'ws':
             command = 'queue';
             break;
@@ -50,55 +55,41 @@ export function playerInteractMessage(message: Message, _command: string) {
 
 async function interact(command: string, guildId: string, reply: (c: string) => Promise<void>): Promise<void> {
     let subscription = subscriptions.get(guildId);
+    if (!subscription) {
+        await reply('Ich spiele garnicht?');
+        return;
+    }
     if (command === 'pause') {
-        if (subscription) {
-            subscription.audioPlayer.pause();
-            await reply('Pausiert');
-        } else {
-            await reply('Ich spiele garnicht?');
-        }
+        subscription.audioPlayer.pause();
+        await reply('Pausiert');
     } else if (command === 'resume') {
-        if (subscription) {
-            subscription.audioPlayer.unpause();
-            reply('Weiter gehts');
-        } else {
-            await reply('Ich spiele garnicht?');
-        }
+        subscription.audioPlayer.unpause();
+        reply('Weiter gehts');
+    } else if (command === 'stop') {
+        subscription.stop();
+        reply('Halt stop!');
     } else if (command === 'skip') {
-        if (subscription) {
-            // Calling .stop() on an AudioPlayer causes it to transition into the Idle state. Because of a state transition
-            // listener defined in music/subscription.ts, transitions into the Idle state mean the next track from the queue
-            // will be loaded and played.
-            subscription.audioPlayer.stop();
-            await reply('Song geskipped');
-        } else {
-            await reply('Ich spiele garnicht?');
-        }
+        // Calling .stop() on an AudioPlayer causes it to transition into the Idle state. Because of a state transition
+        // listener defined in music/subscription.ts, transitions into the Idle state mean the next track from the queue
+        // will be loaded and played.
+        subscription.audioPlayer.stop();
+        await reply('Song geskipped');
     } else if (command === 'leave') {
-        if (subscription) {
-            subscription.voiceConnection.destroy();
-            subscriptions.delete(guildId);
-            await reply('tüddelü 👋');
-        } else {
-            await reply('Ich spiele garnicht?');
-        }
+        subscription.voiceConnection.destroy();
+        subscriptions.delete(guildId);
+        await reply('tüddelü 👋');
     } else if (command === 'queue') {
-        // Print out the current queue, including up to the next 5 tracks to be played.
-        if (subscription) {
-            const current =
-                subscription.audioPlayer.state.status === AudioPlayerStatus.Idle
-                    ? `Gerade wird nichts abgespielt`
-                    : `**${(subscription.audioPlayer.state.resource as AudioResource<Track>).metadata.title}** wird abgespielt`;
+        const current =
+            subscription.audioPlayer.state.status === AudioPlayerStatus.Idle
+                ? `Gerade wird nichts abgespielt`
+                : `**${(subscription.audioPlayer.state.resource as AudioResource<Track>).metadata.title}** wird abgespielt`;
 
-            const queue = subscription.queue
-                .slice(0, 5)
-                .map((track, index) => `${index + 1}) ${track.title}`)
-                .join('\n');
+        const queue = subscription.queue
+            .slice(0, 5)
+            .map((track, index) => `${index + 1}) ${track.title}`)
+            .join('\n');
 
-            await reply(`${current}\n\n${queue}`);
-        } else {
-            await reply('Ich spiele garnicht?');
-        }
+        await reply(`${current}\n\n${queue}`);
     }
 }
 

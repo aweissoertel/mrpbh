@@ -29,7 +29,7 @@ export async function aufgeklatscht(message: Message): Promise<MessageEmbed> {
     const fancyEmbed = new MessageEmbed()
         .setColor('#FEE75C')
         .setTitle('Aufgeklatscht')
-        .setDescription(`Opfer ${tagged ? tagged : message.author} ist aufgeklatscht.\nSchon ${counter} Mal aufgeklatscht.`)
+        .setDescription(`Opfer ${tagged || message.author} ist aufgeklatscht.\nSchon ${counter} Mal aufgeklatscht.`)
         .setTimestamp()
         .setFooter(':)','https://cdn.discordapp.com/avatars/519217034530127903/5ba34624d113bdbf4b48dd1c3c574130.png')
 

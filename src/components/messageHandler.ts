@@ -1,7 +1,8 @@
-import { Client, Message } from 'discord.js';
+import { Client, Message, User } from 'discord.js';
+import { client } from '..';
 import { bobbyCounter, aufgeklatscht } from './counter';
 import { playerInteractMessage, schedulePlayMessage } from './musicPlayer/musicPlayer';
-import { voiceSetup } from './musicPlayer/voiceSetup'
+import { commands, help, voiceSetup } from './musicPlayer/voiceSetup'
 
 export function messageHandler(message: Message): void {
     const format = message.content.toLowerCase().trim();
@@ -15,13 +16,18 @@ export function messageHandler(message: Message): void {
             bobbyCounter()
                 .then(reply => { message.reply(reply) })
             return;
-        case 'pause':
-        case 'unpause':
+        case commands.pause:
+        case commands.resume:
+        case commands.stop:
+        case commands.skip:
+        case commands.stop:
+        case commands.leave:
         case 'weiter':
-        case 'tschö':
-        case 'warteschlange':
         case 'ws':
             playerInteractMessage(message, format);
+            return;
+        case 'hilfe':
+            help().then(e => { message.reply({ embeds: [e] }) });
             return;
     }
     if (format.startsWith('aufgeklatscht')) {

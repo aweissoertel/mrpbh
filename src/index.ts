@@ -5,7 +5,7 @@ import { messageHandler } from './components/messageHandler.js';
 
 const intents = new Intents();
 intents.add(Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_VOICE_STATES, Intents.FLAGS.GUILD_MESSAGE_REACTIONS);
-const client = new Discord.Client({intents: intents});
+export const client = new Discord.Client({intents: intents});
 client.login(process.env.TOKEN);
 
 client.once('ready', () => {
