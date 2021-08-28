@@ -21,7 +21,7 @@ export function messageHandler(message: Message): void {
         case commands.skip:
         case commands.stop:
         case commands.leave:
-        case 'weiter':
+        case 'skip':
         case 'ws':
             playerInteractMessage(message, format);
             return;

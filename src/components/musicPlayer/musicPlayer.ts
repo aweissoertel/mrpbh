@@ -12,10 +12,17 @@ export async function schedulePlayMessage(message: Message) {
     if (!message.member) {
         message.reply('Kein Member (hier läuft was falsch)');
     }
-    const arg = message.content.split(' ')[1];
+    // get _everything_ after _first_ whitespace
+    const ws = message.content.indexOf(' ');
+    const arg = message.content.slice(ws+1);
+    
     let ytLink = '';
     if (arg?.startsWith('http') || arg?.startsWith('youtu')) {
-        ytLink = arg;
+        if (!arg.includes('playlist')) {
+            ytLink = arg;
+        } else {
+            playList(arg);
+        }
     } else {
         const id = await searchYoutube(arg);
         ytLink = 'https://youtu.be/' + id;
@@ -61,7 +68,7 @@ async function searchYoutube(key: string): Promise<string> {
         const response = await axios({
             url: `https://youtube.googleapis.com/youtube/v3/search`,
             params: {
-                part: 'snippet',
+                part: 'id',
                 maxResults: 3,
                 q: key,
                 type: 'video',
@@ -180,3 +187,7 @@ async function play(link: string, guildId: string, sender: GuildMember, reply: r
         await reply('Irgendwas ist schief gelaufen, probier nochmal oder lass einfach');
     }
 }
+function playList(arg: string) {
+    
+}
+
