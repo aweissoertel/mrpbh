@@ -8,6 +8,7 @@ import { raw as ytdl } from 'youtube-dl-exec';
 export interface TrackData {
     url: string;
     title: string;
+    thumb: string;
     onStart: () => void;
     onFinish: () => void;
     onError: (error: Error) => void;
@@ -28,13 +29,15 @@ const noop = () => { };
 export class Track implements TrackData {
     public readonly url: string;
     public readonly title: string;
+    public readonly thumb: string;
     public readonly onStart: () => void;
     public readonly onFinish: () => void;
     public readonly onError: (error: Error) => void;
 
-    private constructor({ url, title, onStart, onFinish, onError }: TrackData) {
+    private constructor({ url, title, thumb, onStart, onFinish, onError }: TrackData) {
         this.url = url;
         this.title = title;
+        this.thumb = thumb;
         this.onStart = onStart;
         this.onFinish = onFinish;
         this.onError = onError;
@@ -83,10 +86,13 @@ export class Track implements TrackData {
      * @param title Provided video title, optional
      * @returns The created Track
      */
-    public static async from(url: string, methods: Pick<Track, 'onStart' | 'onFinish' | 'onError'>, title?: string): Promise<Track> {
+    public static async from(url: string, methods: Pick<Track, 'onStart' | 'onFinish' | 'onError'>, title?: string, thumb?: string): Promise<Track> {
+        const info = await getInfo(url);
         if (!title) {
-            const info = await getInfo(url);
             title = info.videoDetails.title;
+        }
+        if (!thumb) {
+            thumb = info.videoDetails.thumbnails[0].url;
         }
 
         // The methods are wrapped so that we can ensure that they are only called once.
@@ -108,6 +114,7 @@ export class Track implements TrackData {
         return new Track({
             title: title,
             url,
+            thumb: thumb,
             ...wrappedMethods,
         });
     }

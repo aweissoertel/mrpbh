@@ -1,12 +1,14 @@
 import { AudioPlayerStatus, AudioResource, entersState, joinVoiceChannel, VoiceConnectionStatus } from "@discordjs/voice";
-import { GuildMember, Message, Snowflake, User } from "discord.js";
+import axios from "axios";
+import { GuildMember, Message, MessageEmbed, MessagePayload, ReplyMessageOptions, Snowflake, User } from "discord.js";
 import { MusicSubscription } from "./subscription";
 import { Track } from "./track";
 import { commands } from "./voiceSetup";
 
 const subscriptions = new Map<Snowflake, MusicSubscription>();
+type replyType = (options: string | MessagePayload | ReplyMessageOptions) => Promise <void>;
 
-export function schedulePlayMessage(message: Message) {
+export async function schedulePlayMessage(message: Message) {
     if (!message.member) {
         message.reply('Kein Member (hier läuft was falsch)');
     }
@@ -15,11 +17,11 @@ export function schedulePlayMessage(message: Message) {
     if (arg?.startsWith('http') || arg?.startsWith('youtu')) {
         ytLink = arg;
     } else {
-        //TODO: get yt link from arg
-        ytLink = 'https://youtu.be/FC3y9llDXuM';
+        const id = await searchYoutube(arg);
+        ytLink = 'https://youtu.be/' + id;
     }
 
-    const reply = async (content: string): Promise<void> => { await message.reply(content) };
+    const reply: replyType = async (options) => { await message.reply(options) };
 
     play(ytLink, message.guildId as string, message.member!, reply);
 }
@@ -27,7 +29,7 @@ export function schedulePlayMessage(message: Message) {
 export function playerInteractMessage(message: Message, _command: string) {
     const reply = async (content: string): Promise<void> => { await message.reply(content) };
     let command = '';
-    switch(_command) {
+    switch (_command) {
         case commands.pause:
             command = 'pause';
             break;
@@ -51,6 +53,27 @@ export function playerInteractMessage(message: Message, _command: string) {
     }
     interact(command, message.guildId as string, reply);
 
+}
+
+async function searchYoutube(key: string): Promise<string> {
+    let id = '';
+    try {
+        const response = await axios({
+            url: `https://youtube.googleapis.com/youtube/v3/search`,
+            params: {
+                part: 'snippet',
+                maxResults: 3,
+                q: key,
+                type: 'video',
+                key: process.env.YT_TOKEN
+            }
+        });
+        const video = response.data.items.find(item => item.id.kind === 'youtube#video');
+        id = video.id.videoId;
+    } catch (e) {
+        console.log(e);
+    }
+    return id;
 }
 
 async function interact(command: string, guildId: string, reply: (c: string) => Promise<void>): Promise<void> {
@@ -93,7 +116,7 @@ async function interact(command: string, guildId: string, reply: (c: string) => 
     }
 }
 
-async function play(link: string, guildId: string, sender: GuildMember, reply: (c: string) => Promise<void>): Promise<void> {
+async function play(link: string, guildId: string, sender: GuildMember, reply: replyType): Promise<void> {
     let subscription = subscriptions.get(guildId);
 
 
@@ -145,7 +168,13 @@ async function play(link: string, guildId: string, sender: GuildMember, reply: (
         });
         // Enqueue the track and reply a success message to the user
         subscription.enqueue(track);
-        await reply(`**${track.title}** eingereiht`);
+        const embed = new MessageEmbed()
+            .setColor('#FEE75C')
+            .setDescription(`[**${track.title}**](${track.url}) eingereiht`)
+            .setThumbnail(track.thumb)
+            .setTimestamp()
+            .setFooter(':)', 'https://cdn.discordapp.com/avatars/519217034530127903/5ba34624d113bdbf4b48dd1c3c574130.png')
+        await reply({ embeds: [embed] });
     } catch (error) {
         console.warn(error);
         await reply('Irgendwas ist schief gelaufen, probier nochmal oder lass einfach');

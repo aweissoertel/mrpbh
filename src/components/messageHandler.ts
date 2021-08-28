@@ -1,5 +1,4 @@
 import { Client, Message, User } from 'discord.js';
-import { client } from '..';
 import { bobbyCounter, aufgeklatscht } from './counter';
 import { playerInteractMessage, schedulePlayMessage } from './musicPlayer/musicPlayer';
 import { commands, help, voiceSetup } from './musicPlayer/voiceSetup'
@@ -32,7 +31,7 @@ export function messageHandler(message: Message): void {
     }
     if (format.startsWith('aufgeklatscht')) {
         aufgeklatscht(message)
-            .then(reply => { message.reply({embeds: [reply]}) });
+            .then(reply => { message.reply({ embeds: [reply] }) });
     }
     if (format.startsWith('play')) {
         schedulePlayMessage(message);
