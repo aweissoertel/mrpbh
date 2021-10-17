@@ -72,7 +72,7 @@ export async function help(): Promise<MessageEmbed> {
         .addFields(
             { name: 'Counter Befehle', value: '**Bobby kraulen / Bobby**: krault Bobby ein Mal\n\n**Aufgeklatscht *@User* **: Wenn einer aufgeklatscht ist. *User* kannst du auch weglassen, wenn du selber so dumm warst' },
             { name: '\u200B', value: '\u200B' },
-            { name: 'MusikBot Befehle', value: `**${commands.play} *Song* **: *Song* abspielen. *Song* ist entweder ein YouTube Link oder ein Suchbegriff\n
+            { name: 'MusikBot Befehle', value: `**${commands.play} *Song* *shuffle* **: *Song* abspielen. *Song* ist entweder ein YouTube Link, ein Suchbegriff oder eine Playlist. Playlist wird zufällig wiedergegeben, wenn *shuffle* hinter dem Link steht\n
                 **${commands.pause}**: Pause\n
                 **${commands.resume}**: Fortsetzen\n
                 **${commands.stop}**: Stop\n
