@@ -1,4 +1,4 @@
-import Discord, { Intents } from 'discord.js';
+import Discord, { Intents, Message } from 'discord.js';
 import dotenv from 'dotenv';
 dotenv.config();
 import { messageHandler } from './components/messageHandler.js';
@@ -21,3 +21,12 @@ client.on('messageCreate', message => {
 client.on('shardError', error => {
     console.error('A websocket connection encountered an error:', error);
 });
+
+export const dispatchError = async (message: string, context?: Message): Promise<void> => {
+    const alex = await client.users.fetch('158928685934706688');
+    if (context) {
+        context.channel.send(`Debug: ${message}; ${alex}`);
+    } else {
+        alex.send(message);
+    }
+}

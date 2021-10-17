@@ -48,16 +48,21 @@ export class Track implements TrackData {
      */
     public createAudioResource(): Promise<AudioResource<Track>> {
         return new Promise((resolve, reject) => {
-            const process = ytdl(
-                this.url,
-                {
-                    o: '-',
-                    q: '',
-                    f: 'bestaudio[ext=webm+acodec=opus+asr=48000]/bestaudio',
-                    r: '100K',
-                },
-                { stdio: ['ignore', 'pipe', 'ignore'] },
-            );
+            let process: any;
+            try {
+                process = ytdl(
+                    this.url,
+                    {
+                        o: '-',
+                        q: '',
+                        f: 'bestaudio[ext=webm+acodec=opus+asr=48000]/bestaudio',
+                        r: '100K',
+                    },
+                    { stdio: ['ignore', 'pipe', 'ignore'] },
+                );
+            } catch (error) {
+                console.log(error);
+            }
             if (!process.stdout) {
                 reject(new Error('No stdout'));
                 return;
@@ -68,13 +73,17 @@ export class Track implements TrackData {
                 stream.resume();
                 reject(error);
             };
-            process
-                .once('spawn', () => {
-                    demuxProbe(stream)
-                        .then((probe) => resolve(createAudioResource(probe.stream, { metadata: this, inputType: probe.type })))
-                        .catch(onError);
-                })
-                .catch(onError);
+            try {
+                process
+                    .once('spawn', () => {
+                        demuxProbe(stream)
+                            .then((probe) => resolve(createAudioResource(probe.stream, { metadata: this, inputType: probe.type })))
+                            .catch(onError);
+                    })
+                    .catch(onError);
+            } catch (error) {
+                console.log(error);
+            }
         });
     }
 

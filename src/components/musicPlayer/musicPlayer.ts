@@ -1,36 +1,47 @@
 import { AudioPlayerStatus, AudioResource, entersState, joinVoiceChannel, VoiceConnectionStatus } from "@discordjs/voice";
 import axios from "axios";
-import { GuildMember, Message, MessageEmbed, MessagePayload, ReplyMessageOptions, Snowflake, User } from "discord.js";
+import { GuildMember, Message, MessageEmbed, MessagePayload, ReplyMessageOptions, Snowflake } from "discord.js";
 import { MusicSubscription } from "./subscription";
 import { Track } from "./track";
 import { commands } from "./voiceSetup";
+import { dispatchError } from "../..";
+
 
 const subscriptions = new Map<Snowflake, MusicSubscription>();
-type replyType = (options: string | MessagePayload | ReplyMessageOptions) => Promise <void>;
+export type replyType = (options: string | MessagePayload | ReplyMessageOptions) => Promise <void>;
 
 export async function schedulePlayMessage(message: Message) {
     if (!message.member) {
-        message.reply('Kein Member (hier läuft was falsch)');
+        dispatchError('Fehler: Kein Member (mP/schedulePlayMessage)', message);
     }
     // get _everything_ after _first_ whitespace
-    const ws = message.content.indexOf(' ');
-    const arg = message.content.slice(ws+1);
+    const firstSpace = message.content.indexOf(' ');
+    const secondSpace = message.content.indexOf(' ', firstSpace + 1);
+    const arg = message.content.slice(firstSpace + 1, secondSpace);
+
+    // TODO: not command compatible
+    const isPlaylistShuffle = message.content.includes('shuffle');
     
-    let ytLink = '';
+    const reply: replyType = async (options) => { await message.reply(options) };
     if (arg?.startsWith('http') || arg?.startsWith('youtu')) {
+        //link provided, could be video or playlist
         if (!arg.includes('playlist')) {
-            ytLink = arg;
+            play(arg, message.guildId as string, message.member!, reply);
         } else {
-            playList(arg);
+            const listId = arg.slice(arg.indexOf('list=')+5);
+            playlist(listId, message.guildId as string, message.member!, reply, isPlaylistShuffle);
         }
     } else {
+        // search term provided, search for video
         const id = await searchYoutube(arg);
-        ytLink = 'https://youtu.be/' + id;
+        if (!id) {
+            dispatchError('Fehler: searchYoutube undefined (mP/schedulePlayMessage)', message);
+            message.reply('YouTube-Suche fehlgeschlagen. Hm joa weiß auch nicht. Probier stattdessen einen Link');
+            return;
+        }
+        const ytLink = 'https://youtu.be/' + id;
+        play(ytLink, message.guildId as string, message.member!, reply);
     }
-
-    const reply: replyType = async (options) => { await message.reply(options) };
-
-    play(ytLink, message.guildId as string, message.member!, reply);
 }
 
 export function playerInteractMessage(message: Message, _command: string) {
@@ -79,6 +90,7 @@ async function searchYoutube(key: string): Promise<string> {
         id = video.id.videoId;
     } catch (e) {
         console.log(e);
+        dispatchError('Fehler: axios call youtube api fehlgeschlagen');
     }
     return id;
 }
@@ -86,7 +98,7 @@ async function searchYoutube(key: string): Promise<string> {
 async function interact(command: string, guildId: string, reply: (c: string) => Promise<void>): Promise<void> {
     let subscription = subscriptions.get(guildId);
     if (!subscription) {
-        await reply('Ich spiele garnicht?');
+        await reply('Ich spiele gar nicht?');
         return;
     }
     if (command === 'pause') {
@@ -155,6 +167,7 @@ async function play(link: string, guildId: string, sender: GuildMember, reply: r
         await entersState(subscription.voiceConnection, VoiceConnectionStatus.Ready, 20e3);
     } catch (error) {
         console.warn(error);
+        dispatchError('Fehler: subscription.voiceConnection state nicht erreicht (mP/play)');
         await reply('Konnte Voicechannel nicht innerhalb von 20 Sekunden beitreten, versuch gleich nochmal');
         return;
     }
@@ -184,10 +197,72 @@ async function play(link: string, guildId: string, sender: GuildMember, reply: r
         await reply({ embeds: [embed] });
     } catch (error) {
         console.warn(error);
+        dispatchError('Fehler: track erstellung oder enqueue fehlgeschlagen in mP/play');
         await reply('Irgendwas ist schief gelaufen, probier nochmal oder lass einfach');
     }
 }
-function playList(arg: string) {
-    
+
+async function playlist(arg: string, guildId: string, sender: GuildMember, reply: replyType, shuffle: boolean = false): Promise<void> {
+    let subscription = subscriptions.get(guildId);
+
+
+    // If a connection to the guild doesn't already exist and the user is in a voice channel, join that channel
+    // and create a subscription.
+    if (!subscription) {
+        if (sender instanceof GuildMember && sender.voice.channel) {
+            const channel = sender.voice.channel;
+            subscription = new MusicSubscription(
+                joinVoiceChannel({
+                    channelId: channel.id,
+                    guildId: channel.guild.id,
+                    adapterCreator: channel.guild.voiceAdapterCreator,
+                }),
+            );
+            subscription.voiceConnection.on('error', console.warn);
+            subscriptions.set(guildId, subscription);
+        }
+    }
+
+    // If there is no subscription, tell the user they need to join a channel.
+    if (!subscription) {
+        await reply('Join erstmal nem Voicechannel');
+        return;
+    }
+
+    let items;
+    try {
+    // retrieve array of video ids in playlist from youtube api
+        const response = await axios({
+            url: 'https://youtube.googleapis.com/youtube/v3/playlistItems',
+            params: {
+                maxResults: 50,
+                part: 'contentDetails',
+                playlistId: arg,
+                key: process.env.YT_TOKEN,
+            },
+        });
+        items = response.data?.items.map(item => {
+            const video = item.contentDetails?.videoId;
+            if (video) return `https://youtu.be/${video}`;
+        });
+    } catch (error) {
+        dispatchError('Axios request error (YT Playlist query) mP/playlist');
+        console.log(error);
+        return;
+    }
+    if (!items) {
+        //error
+        dispatchError('Keine Antwort von YT playlist query mP/playlist');
+        return;
+    }
+    items = shuffle ? shuffleArray(items) : items;
+    subscription.enqueuePlaylist(items, reply);
 }
 
+function shuffleArray(array: any[]) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}

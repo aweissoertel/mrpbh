@@ -10,6 +10,7 @@ import {
 } from '@discordjs/voice';
 import { Track } from './track';
 import { promisify } from 'util';
+import { replyType } from './musicPlayer';
 
 const wait = promisify(setTimeout);
 
@@ -23,11 +24,16 @@ export class MusicSubscription {
     public queue: Track[];
     public queueLock = false;
     public readyLock = false;
+    public playlistMode = false;
+    public reply: replyType;
+    private playlistQueue: string[];
 
     public constructor(voiceConnection: VoiceConnection) {
         this.voiceConnection = voiceConnection;
         this.audioPlayer = createAudioPlayer();
         this.queue = [];
+        this.playlistQueue = [];
+        this.reply = async () => {return};
 
         this.voiceConnection.on('stateChange', async (_, newState) => {
             if (newState.status === VoiceConnectionStatus.Disconnected) {
@@ -111,13 +117,54 @@ export class MusicSubscription {
         void this.processQueue();
     }
 
+    public async enqueuePlaylist(playlist: string[], reply: replyType) {
+        if (this.playlistMode) {
+            reply('Gerade wird schon eine Playlist abgespielt. Bitte warte bis diese ganz abgespielt ist oder stoppe erst mit "stop"');
+            return;
+        }
+        reply('Playlist erkannt. Wird jetzt nacheinander abgespielt. Lieder können normal geskipped oder die ganze Playlist gestoppt werden');
+        this.playlistMode = true;
+        this.reply = reply;
+        // create track out of first item
+        const first = await this.createTrack(playlist[0]);
+        // enqueue first track
+        // TODO: loop?
+        this.queue.push(first);
+        // create track out of second item & enqueue
+        const second = await this.createTrack(playlist[1]);
+        this.enqueue(second);
+        // keep list of remaining items
+        this.playlistQueue = this.playlistQueue.concat(playlist.slice(2));
+        // TODO: in processQueue(), handle track creation & enqueue of next item once one track finishes
+        // also, create some custom info messages that a playlist currently playing
+        this.processQueue();
+    }
+
+    public async createTrack(id: string){
+        const sub = this;
+        const track = await Track.from(id, {
+            async onStart() {
+            },
+            async onFinish() {
+            },
+            async onError(error) {
+                console.warn(error);
+                await sub.reply(`Fehler: ${error.message}`);
+            },
+        });
+        return track;
+    }
+
     /**
      * Stops audio playback and empties the queue
      */
     public stop() {
         this.queueLock = true;
         this.queue = [];
+        this.playlistMode = false;
+        this.playlistQueue = [];
         this.audioPlayer.stop(true);
+        this.queueLock = false;
     }
 
     /**
@@ -143,6 +190,12 @@ export class MusicSubscription {
             nextTrack.onError(error as Error);
             this.queueLock = false;
             return this.processQueue();
+        }
+        
+        if (this.playlistMode) {
+            if (this.playlistQueue?.length <= 0) return;
+            const nextTrack = await this.createTrack(this.playlistQueue.shift()!);
+            this.queue.push(nextTrack);
         }
     }
 }

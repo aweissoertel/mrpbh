@@ -1,4 +1,4 @@
-import { Client, Message, User } from 'discord.js';
+import { Message } from 'discord.js';
 import { bobbyCounter, aufgeklatscht } from './counter';
 import { playerInteractMessage, schedulePlayMessage } from './musicPlayer/musicPlayer';
 import { commands, help, voiceSetup } from './musicPlayer/voiceSetup'
