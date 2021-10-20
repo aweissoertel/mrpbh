@@ -16,11 +16,8 @@ export async function schedulePlayMessage(message: Message) {
     }
     // get _everything_ after _first_ whitespace
     const firstSpace = message.content.indexOf(' ');
-    const secondSpace = message.content.indexOf(' ', firstSpace + 1);
-    const arg = message.content.slice(firstSpace + 1, secondSpace);
+    let arg = message.content.slice(firstSpace + 1);
 
-    // TODO: not command compatible
-    const isPlaylistShuffle = message.content.includes('shuffle');
     
     const reply: replyType = async (options) => { await message.reply(options) };
     if (arg?.startsWith('http') || arg?.startsWith('youtu')) {
@@ -28,6 +25,12 @@ export async function schedulePlayMessage(message: Message) {
         if (!arg.includes('playlist')) {
             play(arg, message.guildId as string, message.member!, reply);
         } else {
+            // TODO: not command compatible
+            const isPlaylistShuffle = message.content.includes(' shuffle');
+            if (isPlaylistShuffle) {
+                const secondSpace = message.content.indexOf(' ', firstSpace + 1);
+                arg.slice(0,secondSpace);
+            }
             const listId = arg.slice(arg.indexOf('list=')+5);
             playlist(listId, message.guildId as string, message.member!, reply, isPlaylistShuffle);
         }
