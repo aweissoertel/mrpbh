@@ -184,7 +184,6 @@ export class MusicSubscription {
             // Attempt to convert the Track into an AudioResource (i.e. start streaming the video)
             const resource = await nextTrack.createAudioResource();
             this.audioPlayer.play(resource);
-            this.queueLock = false;
         } catch (error) {
             // If an error occurred, try the next item of the queue instead
             nextTrack.onError(error as Error);
@@ -193,9 +192,18 @@ export class MusicSubscription {
         }
         
         if (this.playlistMode) {
-            if (this.playlistQueue?.length <= 0) return;
+            if (this.playlistQueue?.length <= 0) {
+                // should not happen
+                this.queueLock = false;
+                return;
+            }
             const nextTrack = await this.createTrack(this.playlistQueue.shift()!);
             this.queue.push(nextTrack);
+            if (this.playlistQueue.length === 0) {
+                // finished playlist
+                this.playlistMode = false;
+            }
         }
+        this.queueLock = false;
     }
 }
