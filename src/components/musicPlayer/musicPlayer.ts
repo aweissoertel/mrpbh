@@ -28,7 +28,7 @@ export async function schedulePlayMessage(message: Message) {
             // TODO: not command compatible
             const isPlaylistShuffle = message.content.includes(' shuffle');
             if (isPlaylistShuffle) {
-                const secondSpace = message.content.indexOf(' ', firstSpace + 1);
+                const secondSpace = arg.indexOf(' ');
                 arg.slice(0,secondSpace);
             }
             const listId = arg.slice(arg.indexOf('list=')+5);
