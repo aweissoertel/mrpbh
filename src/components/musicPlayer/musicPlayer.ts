@@ -29,7 +29,7 @@ export async function schedulePlayMessage(message: Message) {
             const isPlaylistShuffle = message.content.includes(' shuffle');
             if (isPlaylistShuffle) {
                 const secondSpace = arg.indexOf(' ');
-                arg.slice(0,secondSpace);
+                arg = arg.slice(0,secondSpace);
             }
             const listId = arg.slice(arg.indexOf('list=')+5);
             playlist(listId, message.guildId as string, message.member!, reply, isPlaylistShuffle);
