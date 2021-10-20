@@ -109,11 +109,16 @@ export class MusicSubscription {
 
     /**
      * Adds a new Track to the queue.
+     * If in playlistMode, the track should be enqueued in first position
      *
      * @param track The track to add to the queue
      */
     public enqueue(track: Track) {
-        this.queue.push(track);
+        if (this.playlistMode) {
+            this.queue.unshift(track);
+        } else {
+            this.queue.push(track);
+        }
         void this.processQueue();
     }
 
