@@ -1,6 +1,6 @@
 import { AudioPlayerStatus, AudioResource, entersState, joinVoiceChannel, VoiceConnectionStatus } from "@discordjs/voice";
 import axios from "axios";
-import { GuildMember, Message, MessageEmbed, MessagePayload, ReplyMessageOptions, Snowflake } from "discord.js";
+import { EmojiIdentifierResolvable, GuildMember, Message, MessageEmbed, MessagePayload, MessageReaction, ReplyMessageOptions, Snowflake } from "discord.js";
 import { MusicSubscription } from "./subscription";
 import { Track } from "./track";
 import { commands } from "./voiceSetup";
@@ -9,6 +9,7 @@ import { dispatchError } from "../..";
 
 const subscriptions = new Map<Snowflake, MusicSubscription>();
 export type replyType = (options: string | MessagePayload | ReplyMessageOptions) => Promise <void>;
+export type reactType = (emoji: EmojiIdentifierResolvable) => Promise<MessageReaction>;
 
 export async function schedulePlayMessage(message: Message) {
     if (!message.member) {
@@ -20,10 +21,11 @@ export async function schedulePlayMessage(message: Message) {
 
     
     const reply: replyType = async (options) => { await message.reply(options) };
+    const reaction: reactType = async (emoji) => { return await message.react(emoji) };
     if (arg?.startsWith('http') || arg?.startsWith('youtu')) {
         //link provided, could be video or playlist
         if (!arg.includes('playlist')) {
-            play(arg, message.guildId as string, message.member!, reply);
+            play(arg, message.guildId as string, message.member!, reply, reaction);
         } else {
             // TODO: not command compatible
             const isPlaylistShuffle = message.content.includes(' shuffle');
@@ -43,12 +45,13 @@ export async function schedulePlayMessage(message: Message) {
             return;
         }
         const ytLink = 'https://youtu.be/' + id;
-        play(ytLink, message.guildId as string, message.member!, reply);
+        play(ytLink, message.guildId as string, message.member!, reply, reaction);
     }
 }
 
 export function playerInteractMessage(message: Message, _command: string) {
-    const reply = async (content: string): Promise<void> => { await message.reply(content) };
+    const reply = async (content: string | MessagePayload | ReplyMessageOptions): Promise<void> => { await message.reply(content) };
+    const reaction = async (emoji: EmojiIdentifierResolvable): Promise<MessageReaction> => { return await message.react(emoji) };
     let command = '';
     switch (_command) {
         case commands.pause:
@@ -72,7 +75,7 @@ export function playerInteractMessage(message: Message, _command: string) {
             command = 'queue';
             break;
     }
-    interact(command, message.guildId as string, reply);
+    interact(command, message.guildId as string, reply, reaction);
 
 }
 
@@ -98,7 +101,7 @@ async function searchYoutube(key: string): Promise<string> {
     return id;
 }
 
-async function interact(command: string, guildId: string, reply: (c: string) => Promise<void>): Promise<void> {
+async function interact(command: string, guildId: string, reply: replyType, reaction: reactType): Promise<void> {
     let subscription = subscriptions.get(guildId);
     if (!subscription) {
         await reply('Ich spiele gar nicht?');
@@ -106,19 +109,19 @@ async function interact(command: string, guildId: string, reply: (c: string) => 
     }
     if (command === 'pause') {
         subscription.audioPlayer.pause();
-        await reply('Pausiert');
+        await reaction('⏸️');
     } else if (command === 'resume') {
         subscription.audioPlayer.unpause();
-        reply('Weiter gehts');
+        reaction('▶️');
     } else if (command === 'stop') {
         subscription.stop();
-        reply('Halt stop!');
+        reaction('🛑');
     } else if (command === 'skip') {
         // Calling .stop() on an AudioPlayer causes it to transition into the Idle state. Because of a state transition
         // listener defined in music/subscription.ts, transitions into the Idle state mean the next track from the queue
         // will be loaded and played.
         subscription.audioPlayer.stop();
-        await reply('Song geskipped');
+        await reaction('⏭️');
     } else if (command === 'leave') {
         subscription.voiceConnection.destroy();
         subscriptions.delete(guildId);
@@ -138,7 +141,7 @@ async function interact(command: string, guildId: string, reply: (c: string) => 
     }
 }
 
-async function play(link: string, guildId: string, sender: GuildMember, reply: replyType): Promise<void> {
+async function play(link: string, guildId: string, sender: GuildMember, reply: replyType, reaction: reactType): Promise<void> {
     let subscription = subscriptions.get(guildId);
 
 
@@ -179,10 +182,10 @@ async function play(link: string, guildId: string, sender: GuildMember, reply: r
         // Attempt to create a Track from the user's video URL
         const track = await Track.from(link, {
             async onStart() {
-                await reply('Ab gehts');
+                await reaction('▶️');
             },
             async onFinish() {
-                await reply('Feddich');
+                await reaction('✅');
             },
             async onError(error) {
                 console.warn(error);
