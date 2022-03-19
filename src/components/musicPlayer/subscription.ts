@@ -10,7 +10,7 @@ import {
 } from '@discordjs/voice';
 import { Track } from './track';
 import { promisify } from 'util';
-import { replyType } from './musicPlayer';
+import { replyType, searchYoutube } from './musicPlayer';
 
 const wait = promisify(setTimeout);
 
@@ -25,6 +25,7 @@ export class MusicSubscription {
     public queueLock = false;
     public readyLock = false;
     public playlistMode = false;
+    public spotifyPlaylistMode = false;
     public reply: replyType;
     private playlistQueue: string[];
 
@@ -127,7 +128,7 @@ export class MusicSubscription {
             reply('Gerade wird schon eine Playlist abgespielt. Bitte warte bis diese ganz abgespielt ist oder stoppe erst mit "stop"');
             return;
         }
-        reply('Playlist erkannt. Wird jetzt nacheinander abgespielt. Lieder können normal geskipped oder die ganze Playlist gestoppt werden');
+        reply('Playlist / Album erkannt. Wird jetzt nacheinander abgespielt. Lieder können normal geskipped oder die ganze Playlist gestoppt werden');
         this.playlistMode = true;
         this.reply = reply;
         // create track out of first item
@@ -137,7 +138,7 @@ export class MusicSubscription {
         this.queue.push(first);
         // create track out of second item & enqueue
         const second = await this.createTrack(playlist[1]);
-        this.enqueue(second);
+        this.queue.push(second);
         // keep list of remaining items
         this.playlistQueue = this.playlistQueue.concat(playlist.slice(2));
         // TODO: in processQueue(), handle track creation & enqueue of next item once one track finishes
@@ -145,8 +146,20 @@ export class MusicSubscription {
         this.processQueue();
     }
 
+    public enqueueSpotifyPlaylist(playlist: string[], reply: replyType) {
+        if (this.playlistMode) {
+            reply('Gerade wird schon eine Playlist abgespielt. Bitte warte bis diese ganz abgespielt ist oder stoppe erst mit "stop"');
+            return;
+        }
+        this.spotifyPlaylistMode = true;
+        this.enqueuePlaylist(playlist, reply);
+    }
+
     public async createTrack(id: string){
         const sub = this;
+        if (this.spotifyPlaylistMode) {
+            id = await searchYoutube(id);
+        }
         const track = await Track.from(id, {
             async onStart() {
             },
@@ -167,6 +180,7 @@ export class MusicSubscription {
         this.queueLock = true;
         this.queue = [];
         this.playlistMode = false;
+        this.spotifyPlaylistMode = false;
         this.playlistQueue = [];
         this.audioPlayer.stop(true);
         this.queueLock = false;
@@ -207,6 +221,7 @@ export class MusicSubscription {
             if (this.playlistQueue.length === 0) {
                 // finished playlist
                 this.playlistMode = false;
+                this.spotifyPlaylistMode = false;
             }
         }
         this.queueLock = false;

@@ -5,11 +5,13 @@ import { MusicSubscription } from "./subscription";
 import { Track } from "./track";
 import { commands } from "./voiceSetup";
 import { dispatchError } from "../..";
+import spotifyService_ from "../spotifyService";
 
 
 const subscriptions = new Map<Snowflake, MusicSubscription>();
 export type replyType = (options: string | MessagePayload | ReplyMessageOptions) => Promise <void>;
 export type reactType = (emoji: EmojiIdentifierResolvable) => Promise<MessageReaction>;
+const spotifyService = new spotifyService_();
 
 export async function schedulePlayMessage(message: Message) {
     if (!message.member) {
@@ -22,8 +24,8 @@ export async function schedulePlayMessage(message: Message) {
     
     const reply: replyType = async (options) => { await message.reply(options) };
     const reaction: reactType = async (emoji) => { return await message.react(emoji) };
-    if (arg?.startsWith('http') || arg?.startsWith('youtu')) {
-        //link provided, could be video or playlist
+    if (arg?.startsWith('http') && arg?.includes('youtu')) {
+        //youtube link provided, could be video or playlist
         if (!arg.includes('playlist')) {
             play(arg, message.guildId as string, message.member!, reply, reaction);
         } else {
@@ -35,6 +37,20 @@ export async function schedulePlayMessage(message: Message) {
             }
             const listId = arg.slice(arg.indexOf('list=')+5);
             playlist(listId, message.guildId as string, message.member!, reply, isPlaylistShuffle);
+        }
+    } else if (arg?.startsWith('http') && arg?.includes('open.spotify')) {
+        // spotify link provided, could be song or playlist or album
+        if (arg.includes('playlist')) {
+            const id = arg.slice(arg.indexOf('playlist/') + 9, arg.indexOf('?') === -1 ? undefined : arg.indexOf('?'));
+            spotify(id, message.guildId as string, message.member!, reply, 'playlist');
+        } else if (arg.includes('album')) {
+            const id = arg.slice(arg.indexOf('album/') + 6, arg.indexOf('?') === -1 ? undefined : arg.indexOf('?'));
+            spotify(id, message.guildId as string, message.member!, reply, 'album');
+        } else if (arg.includes('track')) {
+            const id = arg.slice(arg.indexOf('track/') + 6, arg.indexOf('?') === -1 ? undefined : arg.indexOf('?'));
+            spotify(id, message.guildId as string, message.member!, reply, 'track', reaction);
+        } else {
+            reply('Komischen Spotify Link hast du da. Bot kann nur Songs, Alben und Playlists abspielen.');
         }
     } else {
         // search term provided, search for video
@@ -79,7 +95,7 @@ export function playerInteractMessage(message: Message, _command: string) {
 
 }
 
-async function searchYoutube(key: string): Promise<string> {
+export async function searchYoutube(key: string): Promise<string> {
     let id = '';
     try {
         const response = await axios({
@@ -263,6 +279,54 @@ async function playlist(arg: string, guildId: string, sender: GuildMember, reply
     }
     items = shuffle ? shuffleArray(items) : items;
     subscription.enqueuePlaylist(items, reply);
+}
+
+export async function spotify(id: string, guildId: string, sender: GuildMember, reply: replyType, type = 'track', reaction?: reactType) {
+    // fetch songs from spotify (see postman)
+    // for every item, do a const track = await Track.from(link, ... ) (see play)
+    // could also use subscription.enqueuePlaylist(items)
+    let subscription = subscriptions.get(guildId);
+
+    // If a connection to the guild doesn't already exist and the user is in a voice channel, join that channel
+    // and create a subscription.
+    if (!subscription) {
+        if (sender instanceof GuildMember && sender.voice.channel) {
+            const channel = sender.voice.channel;
+            subscription = new MusicSubscription(
+                joinVoiceChannel({
+                    channelId: channel.id,
+                    guildId: channel.guild.id,
+                    adapterCreator: channel.guild.voiceAdapterCreator,
+                }),
+            );
+            subscription.voiceConnection.on('error', console.warn);
+            subscriptions.set(guildId, subscription);
+        }
+    }
+
+    // If there is no subscription, tell the user they need to join a channel.
+    if (!subscription) {
+        await reply('Join erstmal nem Voicechannel');
+        return;
+    }
+
+    if (type === 'album' || type === 'playlist') {
+        const songs = type === 'album' ? (await spotifyService.getAlbum(id)) : (await spotifyService.getPlaylist(id));
+        console.log('songs', songs);
+        subscription.enqueueSpotifyPlaylist(songs, reply);
+    } else {
+        const track = await spotifyService.getTrack(id);
+        console.log('song', track);
+
+        const idx = await searchYoutube(track);
+        if (!idx) {
+            dispatchError('Fehler: searchYoutube undefined (mP/schedulePlayMessage)');
+            reply('YouTube-Suche fehlgeschlagen. Hm joa weiß auch nicht. Probier stattdessen einen Link');
+            return;
+        }
+        const ytLink = 'https://youtu.be/' + idx;
+        play(ytLink, guildId, sender, reply, reaction!);
+    }
 }
 
 function shuffleArray(array: any[]) {

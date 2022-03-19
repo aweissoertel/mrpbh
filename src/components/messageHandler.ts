@@ -28,6 +28,8 @@ export function messageHandler(message: Message): void {
         case 'hilfe':
             help().then(e => { message.reply({ embeds: [e] }) });
             return;
+        case 'test':
+            return;
     }
     if (format.startsWith('aufgeklatscht')) {
         aufgeklatscht(message)
