@@ -32,6 +32,6 @@
     "grud": "^1.0.11",
     "tweetnacl": "^1.0.3",
     "youtube-dl-exec": "^1.2.4",
-    "ytdl-core": "^4.9.1"
+    "ytdl-core": "^4.11.0"
   }
 }

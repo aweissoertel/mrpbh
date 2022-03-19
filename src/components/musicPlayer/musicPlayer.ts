@@ -20,6 +20,7 @@ export async function schedulePlayMessage(message: Message) {
     // get _everything_ after _first_ whitespace
     const firstSpace = message.content.indexOf(' ');
     let arg = message.content.slice(firstSpace + 1);
+    const isPlaylistShuffle = message.content.includes(' shuffle');
 
     
     const reply: replyType = async (options) => { await message.reply(options) };
@@ -30,7 +31,6 @@ export async function schedulePlayMessage(message: Message) {
             play(arg, message.guildId as string, message.member!, reply, reaction);
         } else {
             // TODO: not command compatible
-            const isPlaylistShuffle = message.content.includes(' shuffle');
             if (isPlaylistShuffle) {
                 const secondSpace = arg.indexOf(' ');
                 arg = arg.slice(0,secondSpace);
@@ -42,13 +42,13 @@ export async function schedulePlayMessage(message: Message) {
         // spotify link provided, could be song or playlist or album
         if (arg.includes('playlist')) {
             const id = arg.slice(arg.indexOf('playlist/') + 9, arg.indexOf('?') === -1 ? undefined : arg.indexOf('?'));
-            spotify(id, message.guildId as string, message.member!, reply, 'playlist');
+            spotify(id, message.guildId as string, message.member!, reply, 'playlist', isPlaylistShuffle);
         } else if (arg.includes('album')) {
             const id = arg.slice(arg.indexOf('album/') + 6, arg.indexOf('?') === -1 ? undefined : arg.indexOf('?'));
-            spotify(id, message.guildId as string, message.member!, reply, 'album');
+            spotify(id, message.guildId as string, message.member!, reply, 'album', isPlaylistShuffle);
         } else if (arg.includes('track')) {
             const id = arg.slice(arg.indexOf('track/') + 6, arg.indexOf('?') === -1 ? undefined : arg.indexOf('?'));
-            spotify(id, message.guildId as string, message.member!, reply, 'track', reaction);
+            spotify(id, message.guildId as string, message.member!, reply, 'track', false, reaction);
         } else {
             reply('Komischen Spotify Link hast du da. Bot kann nur Songs, Alben und Playlists abspielen.');
         }
@@ -281,7 +281,7 @@ async function playlist(arg: string, guildId: string, sender: GuildMember, reply
     subscription.enqueuePlaylist(items, reply);
 }
 
-export async function spotify(id: string, guildId: string, sender: GuildMember, reply: replyType, type = 'track', reaction?: reactType) {
+export async function spotify(id: string, guildId: string, sender: GuildMember, reply: replyType, type = 'track', shuffle = false, reaction?: reactType) {
     // fetch songs from spotify (see postman)
     // for every item, do a const track = await Track.from(link, ... ) (see play)
     // could also use subscription.enqueuePlaylist(items)
@@ -311,13 +311,11 @@ export async function spotify(id: string, guildId: string, sender: GuildMember, 
     }
 
     if (type === 'album' || type === 'playlist') {
-        const songs = type === 'album' ? (await spotifyService.getAlbum(id)) : (await spotifyService.getPlaylist(id));
-        console.log('songs', songs);
+        let songs = type === 'album' ? (await spotifyService.getAlbum(id)) : (await spotifyService.getPlaylist(id));
+        if (shuffle) songs = shuffleArray(songs);
         subscription.enqueueSpotifyPlaylist(songs, reply);
     } else {
         const track = await spotifyService.getTrack(id);
-        console.log('song', track);
-
         const idx = await searchYoutube(track);
         if (!idx) {
             dispatchError('Fehler: searchYoutube undefined (mP/schedulePlayMessage)');
