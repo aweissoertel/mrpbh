@@ -6,6 +6,7 @@ import { Track } from "./track";
 import { commands } from "./voiceSetup";
 import { dispatchError } from "../..";
 import spotifyService_ from "../spotifyService";
+import { getLyricsEmbed, noSongPlaying } from "./lyrics";
 
 
 const subscriptions = new Map<Snowflake, MusicSubscription>();
@@ -90,6 +91,9 @@ export function playerInteractMessage(message: Message, _command: string) {
         case 'ws':
             command = 'queue';
             break;
+        case commands.lyrics:
+            command = 'lyrics';
+            break;
     }
     interact(command, message.guildId as string, reply, reaction);
 
@@ -154,6 +158,12 @@ async function interact(command: string, guildId: string, reply: replyType, reac
             .join('\n');
 
         await reply(`${current}\n\n${queue}`);
+    } else if (command === 'lyrics') {
+        if (subscription.audioPlayer.state.status === AudioPlayerStatus.Idle) {
+            reply({ embeds: [noSongPlaying()] })
+        } else {
+            reply({ embeds: [await getLyricsEmbed((subscription.audioPlayer.state.resource as AudioResource<Track>).metadata.title)] })
+        }
     }
 }
 

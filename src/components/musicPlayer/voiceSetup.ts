@@ -79,7 +79,9 @@ export async function help(): Promise<MessageEmbed> {
                 ⏹️ **${commands.stop}**: Stop\n
                 ⏭️ **${commands.skip}** oder **skip**: Nächster Song\n
                 👋 **${commands.leave}**: Bot verlässt channel. Muss irgendwann kommen, sonst bleibt er für immer\n
-                🧾 **${commands.queue}** oder **ws**: Aktuelle Warteschlange anzeigen` }
+                🧾 **${commands.queue}** oder **ws**: Aktuelle Warteschlange anzeigen\n
+                🎤 **${commands.lyrics}**: Lyrics zu aktuellem Song anzeigen`
+            }
         )
         .setTimestamp()
         .setFooter(':)', 'https://cdn.discordapp.com/avatars/519217034530127903/5ba34624d113bdbf4b48dd1c3c574130.png')
@@ -94,5 +96,6 @@ export enum commands {
     stop = 'stop',
     skip = 'weiter',
     leave = 'tschö',
-    queue = 'warteschlange'
+    queue = 'warteschlange',
+    lyrics = 'lyrics',
 }
