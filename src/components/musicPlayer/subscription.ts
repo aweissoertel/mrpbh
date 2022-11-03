@@ -205,6 +205,7 @@ export class MusicSubscription {
             this.audioPlayer.play(resource);
         } catch (error) {
             // If an error occurred, try the next item of the queue instead
+            console.log('subscription.processQueue: ', error);
             nextTrack.onError(error as Error);
             this.queueLock = false;
             return this.processQueue();

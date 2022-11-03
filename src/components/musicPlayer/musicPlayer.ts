@@ -1,4 +1,4 @@
-import { AudioPlayerStatus, AudioResource, entersState, joinVoiceChannel, VoiceConnectionStatus } from "@discordjs/voice";
+import { AudioPlayerStatus, AudioResource, DiscordGatewayAdapterCreator, entersState, joinVoiceChannel, VoiceConnectionStatus } from "@discordjs/voice";
 import axios from "axios";
 import { EmojiIdentifierResolvable, GuildMember, Message, MessageEmbed, MessagePayload, MessageReaction, ReplyMessageOptions, Snowflake } from "discord.js";
 import { MusicSubscription } from "./subscription";
@@ -180,7 +180,7 @@ async function play(link: string, guildId: string, sender: GuildMember, reply: r
                 joinVoiceChannel({
                     channelId: channel.id,
                     guildId: channel.guild.id,
-                    adapterCreator: channel.guild.voiceAdapterCreator,
+                    adapterCreator: channel.guild.voiceAdapterCreator as DiscordGatewayAdapterCreator,
                 }),
             );
             subscription.voiceConnection.on('error', console.warn);
@@ -225,7 +225,7 @@ async function play(link: string, guildId: string, sender: GuildMember, reply: r
             .setDescription(`[**${track.title}**](${track.url}) eingereiht`)
             .setThumbnail(track.thumb)
             .setTimestamp()
-            .setFooter(':)', 'https://cdn.discordapp.com/avatars/519217034530127903/5ba34624d113bdbf4b48dd1c3c574130.png')
+            .setFooter({ text: ':)', iconURL: 'https://cdn.discordapp.com/avatars/519217034530127903/5ba34624d113bdbf4b48dd1c3c574130.png' })
         await reply({ embeds: [embed] });
     } catch (error) {
         console.warn(error);
@@ -247,7 +247,7 @@ async function playlist(arg: string, guildId: string, sender: GuildMember, reply
                 joinVoiceChannel({
                     channelId: channel.id,
                     guildId: channel.guild.id,
-                    adapterCreator: channel.guild.voiceAdapterCreator,
+                    adapterCreator: channel.guild.voiceAdapterCreator as DiscordGatewayAdapterCreator,
                 }),
             );
             subscription.voiceConnection.on('error', console.warn);
@@ -306,7 +306,7 @@ export async function spotify(id: string, guildId: string, sender: GuildMember, 
                 joinVoiceChannel({
                     channelId: channel.id,
                     guildId: channel.guild.id,
-                    adapterCreator: channel.guild.voiceAdapterCreator,
+                    adapterCreator: channel.guild.voiceAdapterCreator as DiscordGatewayAdapterCreator,
                 }),
             );
             subscription.voiceConnection.on('error', console.warn);

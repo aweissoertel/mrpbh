@@ -17,9 +17,9 @@ export async function getLyricsEmbed(title: string): Promise<MessageEmbed> {
 
     const embed = new MessageEmbed()
         .setColor('#FEE75C')
-        .setAuthor('Mr. PoopyButtHole', 'https://cdn.discordapp.com/avatars/519217034530127903/5ba34624d113bdbf4b48dd1c3c574130.png', 'https://twitter.com/squab_')
+        .setAuthor({ name: 'Mr. PoopyButtHole', url: 'https://twitter.com/squab_', iconURL: 'https://cdn.discordapp.com/avatars/519217034530127903/5ba34624d113bdbf4b48dd1c3c574130.png' })
         .setTimestamp()
-        .setFooter(':)', 'https://cdn.discordapp.com/avatars/519217034530127903/5ba34624d113bdbf4b48dd1c3c574130.png')
+        .setFooter({ text: ':)', iconURL: 'https://cdn.discordapp.com/avatars/519217034530127903/5ba34624d113bdbf4b48dd1c3c574130.png' })
     if (!song || !song.lyrics) {
         embed
             .setTitle('Fehler')
@@ -37,12 +37,12 @@ export async function getLyricsEmbed(title: string): Promise<MessageEmbed> {
 export function noSongPlaying(): MessageEmbed {
     const embed = new MessageEmbed()
         .setColor('#FEE75C')
-        .setAuthor('Mr. PoopyButtHole', 'https://cdn.discordapp.com/avatars/519217034530127903/5ba34624d113bdbf4b48dd1c3c574130.png', 'https://twitter.com/squab_')
+        .setAuthor({ name: 'Mr. PoopyButtHole', url: 'https://twitter.com/squab_', iconURL: 'https://cdn.discordapp.com/avatars/519217034530127903/5ba34624d113bdbf4b48dd1c3c574130.png' })
         .setURL('https://i.kym-cdn.com/entries/icons/mobile/000/035/360/unga.jpg')
         .setTitle('Confused Unga Bunga')
         .setThumbnail('https://i.kym-cdn.com/entries/icons/mobile/000/035/360/unga.jpg')
         .setDescription('Gerade wird nichts abgespielt, was hast du jetzt erwartet')
         .setTimestamp()
-        .setFooter(':)', 'https://cdn.discordapp.com/avatars/519217034530127903/5ba34624d113bdbf4b48dd1c3c574130.png')
+        .setFooter({ text: ':)', iconURL: 'https://cdn.discordapp.com/avatars/519217034530127903/5ba34624d113bdbf4b48dd1c3c574130.png' })
     return embed;
 }

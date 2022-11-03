@@ -31,7 +31,7 @@ export async function aufgeklatscht(message: Message): Promise<MessageEmbed> {
         .setTitle('Aufgeklatscht')
         .setDescription(`Opfer ${tagged || message.author} ist aufgeklatscht.\nSchon ${counter} Mal aufgeklatscht.`)
         .setTimestamp()
-        .setFooter(':)','https://cdn.discordapp.com/avatars/519217034530127903/5ba34624d113bdbf4b48dd1c3c574130.png')
+        .setFooter({ text: ':)', iconURL: 'https://cdn.discordapp.com/avatars/519217034530127903/5ba34624d113bdbf4b48dd1c3c574130.png' })
 
     return fancyEmbed;
 }

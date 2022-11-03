@@ -65,7 +65,7 @@ export async function help(): Promise<MessageEmbed> {
     const alex = await client.users.fetch('158928685934706688');
     const fancyEmbed = new MessageEmbed()
         .setColor('#FEE75C')
-        .setAuthor('Mr. PoopyButtHole', 'https://cdn.discordapp.com/avatars/519217034530127903/5ba34624d113bdbf4b48dd1c3c574130.png', 'https://twitter.com/squab_')
+        .setAuthor({ name: 'Mr. PoopyButtHole', url: 'https://twitter.com/squab_', iconURL: 'https://cdn.discordapp.com/avatars/519217034530127903/5ba34624d113bdbf4b48dd1c3c574130.png' })
         .setURL('https://twitter.com/squab_')
         .setTitle('Mr. PoopyButtHole Hilfe')
         .setDescription(`Bot zum Musik abspielen und so. ✨*Jetzt auch mit Spotify Support* (ง •_•)ง✨\nWenn was im Arsch ist oder einer ne Idee für noch ein Feature oder ne Frage hat: PM an ${alex || 'Alex'}`)
@@ -84,7 +84,7 @@ export async function help(): Promise<MessageEmbed> {
             }
         )
         .setTimestamp()
-        .setFooter(':)', 'https://cdn.discordapp.com/avatars/519217034530127903/5ba34624d113bdbf4b48dd1c3c574130.png')
+        .setFooter({ text: ':)', iconURL: 'https://cdn.discordapp.com/avatars/519217034530127903/5ba34624d113bdbf4b48dd1c3c574130.png' })
 
         return fancyEmbed;
 }
