@@ -86,7 +86,7 @@ export async function help(): Promise<MessageEmbed> {
         .setTimestamp()
         .setFooter({ text: ':)', iconURL: 'https://cdn.discordapp.com/avatars/519217034530127903/5ba34624d113bdbf4b48dd1c3c574130.png' })
 
-        return fancyEmbed;
+    return fancyEmbed;
 }
 
 export enum commands {
